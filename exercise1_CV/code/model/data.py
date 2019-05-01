@@ -2,7 +2,8 @@ import json, os, torch
 from torchvision import transforms
 from PIL import Image
 
-COCO_PATH = "/home/dllab/coco_subset/"
+# COCO_PATH = "/home/dllab/coco_subset/"
+COCO_PATH = "utils/coco_subset/"
 
 
 class DataReader:
@@ -69,7 +70,8 @@ def get_data_loader(batch_size=1,
     data_loader = torch.utils.data.DataLoader(reader,
                                               batch_size=batch_size,
                                               shuffle=is_train,
-                                              num_workers=4 if is_train else 1)
+                                              num_workers=1)
+                                              # num_workers=4 if is_train else 1)
     return data_loader
 
 

@@ -13,8 +13,8 @@ if __name__ == '__main__':
 
     for idx, (img, keypoints, weights) in enumerate(reader):
         print('img', type(img), img.shape)
-        print('keypoints', type(keypoints), keypoints.shape)
-        print('weights', type(weights), weights.shape)
+        print('keypoints', type(keypoints), keypoints.shape, keypoints)
+        print('weights', type(weights), weights.shape, weights)
 
         # turn image tensor into numpy array containing correctly scaled RGB image
         img_rgb = ((np.array(img) + 1.0)*127.5).round().astype(np.uint8).transpose([0, 2, 3, 1])
