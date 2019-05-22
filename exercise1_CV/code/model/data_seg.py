@@ -4,7 +4,7 @@ from PIL import Image, ImageDraw
 import numpy as np
 
 # COCO_PATH = "/home/dllab/coco_subset/"
-COCO_PATH = "utils/coco_subset/"
+COCO_PATH = "../coco_subset/"
 
 
 class DataReaderSegmentation:
