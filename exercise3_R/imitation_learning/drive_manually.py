@@ -1,4 +1,4 @@
-from __future__ import print_function
+# from __future__ import print_function
 
 import argparse
 from pyglet.window import key
@@ -13,13 +13,21 @@ import json
 
 def key_press(k, mod):
     global restart
-    if k == 0xff0d: restart = True
+    if k == key.Q: restart = True
+    # if k == key.J:  a[0] = -1.0
+    # if k == key.L: a[0] = +1.0
+    # if k == key.I:    a[1] = +1.0
+    # if k == key.K:  a[2] = +0.2
     if k == key.LEFT:  a[0] = -1.0
     if k == key.RIGHT: a[0] = +1.0
     if k == key.UP:    a[1] = +1.0
     if k == key.DOWN:  a[2] = +0.2
 
 def key_release(k, mod):
+    # if k == key.J and a[0] == -1.0: a[0] = 0.0
+    # if k == key.L and a[0] == +1.0: a[0] = 0.0
+    # if k == key.I:    a[1] = 0.0
+    # if k == key.K:  a[2] = 0.0
     if k == key.LEFT and a[0] == -1.0: a[0] = 0.0
     if k == key.RIGHT and a[0] == +1.0: a[0] = 0.0
     if k == key.UP:    a[1] = 0.0
@@ -56,7 +64,6 @@ def save_results(episode_rewards, results_dir="./results"):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-
     parser.add_argument("--collect_data", action="store_true", default=False, help="Collect the data in a pickle file.")
 
     args = parser.parse_args()
@@ -75,6 +82,7 @@ if __name__ == "__main__":
     env.viewer.window.on_key_press = key_press
     env.viewer.window.on_key_release = key_release
 
+    sample_updated = False
 
     a = np.array([0.0, 0.0, 0.0]).astype('float32')
     
@@ -82,18 +90,25 @@ if __name__ == "__main__":
     steps = 0
     while True:
         episode_reward = 0
+        epi_samples = {
+            "state": [],
+            "next_state": [],
+            "reward": [],
+            "action": [],
+            "terminal" : [],
+        }
         state = env.reset()
         while True:
 
             next_state, r, done, info = env.step(a)
             episode_reward += r
 
-            samples["state"].append(state)            # state has shape (96, 96, 3)
-            samples["action"].append(np.array(a))     # action has shape (1, 3)
-            samples["next_state"].append(next_state)
-            samples["reward"].append(r)
-            samples["terminal"].append(done)
-            
+            epi_samples["state"].append(state)            # state has shape (96, 96, 3)
+            epi_samples["action"].append(np.array(a))     # action has shape (1, 3)
+            epi_samples["next_state"].append(next_state)
+            epi_samples["reward"].append(r)
+            epi_samples["terminal"].append(done)
+
             state = next_state
             steps += 1
 
@@ -101,16 +116,32 @@ if __name__ == "__main__":
                 print("\naction " + str(["{:+0.2f}".format(x) for x in a]))
                 print("\nstep {}".format(steps))
 
-            if args.collect_data and steps % 5000 == 0:
-                print('... saving data')
-                store_data(samples, "./data")
-                save_results(episode_rewards, "./results")
+            # if args.collect_data and steps % 5000 == 0:
+            #     print('... saving data')
+            #     store_data(samples, "./data")
+            #     save_results(episode_rewards, "./results")
 
             env.render()
             if done: 
                 break
-        
-        episode_rewards.append(episode_reward)
+
+        print("Episode reward: %.2f" % episode_reward)
+        # update samples only if reward is high
+        if episode_reward > 890:
+            episode_rewards.append(episode_reward)
+            samples["state"].extend(epi_samples["state"])
+            samples["action"].extend(epi_samples["action"])
+            samples["next_state"].extend(epi_samples["next_state"])
+            samples["reward"].extend(epi_samples["reward"])
+            samples["terminal"].extend(epi_samples["terminal"])
+
+            sample_updated = True
+
+        if args.collect_data and sample_updated:
+            print('... saving data. size: ', len(samples['state']))
+            store_data(samples, "./data")
+            save_results(episode_rewards, "./results")
+            sample_updated = False
 
     env.close()
 

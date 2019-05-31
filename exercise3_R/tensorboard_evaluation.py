@@ -1,17 +1,17 @@
 import tensorflow as tf
 import os
-from datetime import datetime
+
 
 class Evaluation:
 
-    def __init__(self, store_dir, name, stats = []):
+    def __init__(self, store_dir, name, idx='', stats=[]):
         """
         Creates placeholders for the statistics listed in stats to generate tensorboard summaries.
         e.g. stats = ["loss"]
         """
         tf.reset_default_graph()
         self.sess = tf.Session()
-        self.tf_writer = tf.summary.FileWriter(os.path.join(store_dir, "%s-%s" % (name, datetime.now().strftime("%Y%m%d-%H%M%S")) ))
+        self.tf_writer = tf.summary.FileWriter(os.path.join(store_dir, "%s-%s" % (name, idx) ))
 
         self.stats = stats
         self.pl_stats = {}
