@@ -1,5 +1,8 @@
 # from __future__ import print_function
 
+import sys
+sys.path.append("../")
+
 import argparse
 from pyglet.window import key
 import gym
@@ -9,6 +12,8 @@ import os
 from datetime import datetime
 import gzip
 import json
+
+import utils
 
 
 def key_press(k, mod):
@@ -103,7 +108,10 @@ if __name__ == "__main__":
             next_state, r, done, info = env.step(a)
             episode_reward += r
 
-            epi_samples["state"].append(state)            # state has shape (96, 96, 3)
+            # converting to grayscale to save image quicker...
+            state = utils.rgb2gray(state)
+
+            epi_samples["state"].append(state)            # state has shape (96, 96)
             epi_samples["action"].append(np.array(a))     # action has shape (1, 3)
             epi_samples["next_state"].append(next_state)
             epi_samples["reward"].append(r)
@@ -112,9 +120,11 @@ if __name__ == "__main__":
             state = next_state
             steps += 1
 
-            if steps % 1000 == 0 or done:
+            if steps == 1000 or done:
                 print("\naction " + str(["{:+0.2f}".format(x) for x in a]))
                 print("\nstep {}".format(steps))
+                steps = 0
+                break
 
             # if args.collect_data and steps % 5000 == 0:
             #     print('... saving data')
@@ -127,7 +137,7 @@ if __name__ == "__main__":
 
         print("Episode reward: %.2f" % episode_reward)
         # update samples only if reward is high
-        if episode_reward > 890:
+        if episode_reward > 850:
             episode_rewards.append(episode_reward)
             samples["state"].extend(epi_samples["state"])
             samples["action"].extend(epi_samples["action"])
@@ -137,7 +147,7 @@ if __name__ == "__main__":
 
             sample_updated = True
 
-        if args.collect_data and sample_updated:
+        if args.collect_data and sample_updated and len(episode_rewards) % 5 == 0:
             print('... saving data. size: ', len(samples['state']))
             store_data(samples, "./data")
             save_results(episode_rewards, "./results")

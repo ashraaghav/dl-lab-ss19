@@ -45,11 +45,17 @@ class CNN(nn.Module):
         #     nn.MaxPool2d(2)
         # )
         self.fc_block = nn.Sequential(
+            # nn.Linear(12*12*32, 100),
             nn.Linear(6*6*64, 100),
             # nn.Linear(3*3*128, 100),
+            nn.Dropout(0.2),
             nn.ReLU(),
             nn.Linear(100, 100),
+            nn.Dropout(0.2),
             nn.ReLU(),
+            # nn.Linear(100, 100),
+            # nn.Dropout(0.2),
+            # nn.ReLU(),
             nn.Linear(100, n_classes)
         )
 

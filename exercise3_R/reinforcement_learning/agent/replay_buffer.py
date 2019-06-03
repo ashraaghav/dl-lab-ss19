@@ -26,7 +26,7 @@ class ReplayBuffer:
 
         # remove oldest experience if current size more than capacity
         if len(self._data.states) > self.capacity:
-            pop = len(self._data.states) - self.capacity
+            pop = int(len(self._data.states) - self.capacity)
             self._data.states = self._data.states[pop:]
             self._data.actions = self._data.actions[pop:]
             self._data.next_states = self._data.next_states[pop:]

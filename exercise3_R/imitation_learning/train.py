@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 from sklearn import metrics
 import argparse
 import torch
-from torch.utils.data import DataLoader, TensorDataset
+from torch.utils.data import DataLoader, TensorDataset, WeightedRandomSampler
 
 from utils import *
 from agent.bc_agent import BCAgent
@@ -38,6 +38,12 @@ def read_data(datasets_dir="./data", frac = 0.1):
     n_samples = len(data["state"])
     X_train, y_train = X[:int((1-frac) * n_samples)], y[:int((1-frac) * n_samples)]
     X_valid, y_valid = X[int((1-frac) * n_samples):], y[int((1-frac) * n_samples):]
+
+    # X_train = X_train[:1500]
+    # y_train = y_train[:1500]
+    # X_valid= X_valid[:1500]
+    # y_valid = y_valid[:1500]
+
     return X_train, y_train, X_valid, y_valid
 
 
@@ -49,15 +55,18 @@ def preprocessing(X_train, y_train, X_valid, y_valid, history_length=1):
     # from read_data) by discretizing the action space using action_to_id() from utils.py.
     print('.... preprocessing')
 
-    X_train = np.array([rgb2gray(x) for x in X_train])
-    X_valid = np.array([rgb2gray(x) for x in X_valid])
+    # X_train = np.array([rgb2gray(x)/255.0 for x in X_train])
+    # X_valid = np.array([rgb2gray(x)/255.0 for x in X_valid])
+    X_train = X_train/255.0
+    X_valid = X_valid/255.0
+
 
     y_train = np.array([action_to_id(y) for y in y_train])
     y_valid = np.array([action_to_id(y) for y in y_valid])
 
-    # Removing 'score' information - it is probably noise??
-    X_valid[:, 85:, :15] = 0.0
-    X_train[:, 85:, :15] = 0.0
+    # # Removing 'score' information - it is probably noise??
+    # X_valid[:, 85:, :15] = 0.0
+    # X_train[:, 85:, :15] = 0.0
 
     # TODO History:
     # At first you should only use the current image as input to your network to learn the next action.
@@ -82,9 +91,9 @@ def preprocessing(X_train, y_train, X_valid, y_valid, history_length=1):
     return X_train, y_train, X_valid, y_valid
 
 
-def get_data_loader(X, y, batch_size, shuffle=True):
+def get_data_loader(X, y, batch_size, **kwargs):
     dataset = TensorDataset(torch.tensor(X), torch.tensor(y))
-    loader = DataLoader(dataset, batch_size=batch_size, shuffle=shuffle)
+    loader = DataLoader(dataset, batch_size=batch_size, **kwargs)
     return loader
 
 
@@ -110,13 +119,21 @@ def train_model(X_train, y_train, X_valid, y_valid, n_minibatches, batch_size, l
     # 2. compute training/ validation accuracy and loss for the batch and visualize them with tensorboard.
     # You can watch the progress of your training *during* the training in your web browser
 
+    # weighted sampling
+    weights = np.array([0.1, 0.6, 0.7, 0.6, 0.9])
+    # weights = np.array([1,1,1,1,1])
+    sample_weights = weights[y_train]
+    sample_weights = sample_weights / sum(sample_weights)
+    # sampler = WeightedRandomSampler(sample_weights, len(sample_weights))
+
     train_loader = get_data_loader(X_train, y_train, batch_size=batch_size, shuffle=False)
     valid_loader = get_data_loader(X_valid, y_valid, batch_size=batch_size, shuffle=False)
 
     # training loop
     for i in range(n_minibatches):
         # sample 1 batch from dataset
-        ids = np.random.choice(list(range(X_train.shape[0])), size=batch_size)
+        # X_batch, y_batch = next(iter(train_loader))
+        ids = np.random.choice(list(range(X_train.shape[0])), size=batch_size, p=sample_weights)
         X_batch = torch.tensor(X_train[ids])
         y_batch = torch.tensor(y_train[ids])
         # run update
@@ -153,16 +170,14 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--history", type=int, help="history length in model", required=True)
-
     args = parser.parse_args()
-
-
     print(args)
 
     # read data    
     X_train, y_train, X_valid, y_valid = read_data("./data")
 
-    history_length = args.history
+    # history_length = args.history
+    history_length = 5
 
     # preprocess data
     X_train, y_train, X_valid, y_valid = preprocessing(X_train, y_train, X_valid, y_valid,

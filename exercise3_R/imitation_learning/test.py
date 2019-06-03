@@ -29,25 +29,34 @@ def run_episode(env, agent, history_length=1, rendering=True, max_timesteps=1000
 
     # preprocessing parameters
     state_history = []
+    push_car = 0
+    prev_state = None
 
     while True:
 
         # TODO: preprocess the state in the same way than in your preprocessing in train_agent.py
         # converting to grayscale
-        state = rgb2gray(state)
-
+        # state = rgb2gray(state)
+        state = rgb2gray(state)/255.0
         # Removing 'score' information - it is probably noise??
         # state[85:, :15] = 0.0
 
         # recording history
         state_history.append(state)
+        # record previous image
+        if len(state_history) > 1:
+            prev_state = state_history[-2]
+        else:
+            prev_state = None
 
         if history_length < len(state_history):
             state_history = state_history[-history_length:]
-            state = torch.tensor([state_history]).float().to(agent.device)
+            state_tensor = torch.tensor([state_history]).float().to(agent.device)
         else:
-            # initial frames - set accelerating forward by default ??
-            state = None
+            # initial frames
+            next_state, r, done, info = env.step(id_to_action(0))
+            state = next_state
+            continue
 
         # TODO: get the action from your agent! You need to transform the discretized actions to continuous
         # actions.
@@ -56,24 +65,31 @@ def run_episode(env, agent, history_length=1, rendering=True, max_timesteps=1000
         #       - just in case your agent misses the first turn because it is too fast: you are allowed to clip the acceleration in test_agent.py
         #       - you can use the softmax output to calculate the amount of lateral acceleration
 
-        if state is not None:
-            pred = agent.predict(state)
+        # predict softmax probabilities
+        if state_tensor is not None:
+            pred = agent.predict(state_tensor, prob=True)[0]
+            # get action for max probability
+            a = id_to_action(np.argmax(pred))
+            # use probability to define acceleration if all 0
+            if np.all(a == 0):
+                # print('softmax...', pred[3])
+                a[1] = pred[3]
         else:
-            pred = 3
+            print('Manual predictions (only init)....')
+            pred = 0
+            a = id_to_action(0)
 
-        a = id_to_action(pred)
+        # print(pred)
 
-        print(a)
 
         # if car stopped for 'n' consecutive frames, restart by accelerating
-        if len(state_history) >= history_length and np.all(state_history[-1][:85, :] == state_history[-3][:85, :]):
-            print('manual acceleration....')
-            a[1] = 0.8
+        if np.all(prev_state[:85, :] == state[:85, :]):
+            push_car = 20
 
-        # accelerating initially regardless of input since this was not reflected in model
-        # if init_accelerate > 0:
-        #     a[1] = 1.0
-        #     init_accelerate -= 1
+        if push_car > 0:
+            print('Car stopped! manual acceleration.... for %d steps' % push_car)
+            a[1] = 0.8
+            push_car -= 1
 
         next_state, r, done, info = env.step(a)
         episode_reward += r
@@ -92,27 +108,31 @@ def run_episode(env, agent, history_length=1, rendering=True, max_timesteps=1000
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--model", type=str, help="Model file to use", required=True)
-    parser.add_argument("--history", type=int, help="history length in model", required=True)
-
+    parser.add_argument("-m", "--model", type=str, help="Model file to use", required=True)
+    parser.add_argument("-p", "--history", type=int, help="history length in model", required=True)
+    parser.add_argument("-s", "--steps", type=int, help="max time steps for episode", default=1000, required=False)
+    parser.add_argument('-e', "--episodes", type=int, help="num episodes to try", default=5, required=False)
     args = parser.parse_args()
 
     # important: don't set rendering to False for evaluation (you may get corrupted state images from gym)
     rendering = True                      
     
-    n_test_episodes = 5           # number of episodes to test
+    n_test_episodes = args.episodes           # number of episodes to test
     history_length = args.history
 
     # TODO: load agent
     agent = BCAgent(device='cuda', history_length=history_length, n_classes=5)
     agent.load(args.model)
+    # history_length=5
+    # agent = BCAgent(device='cuda', history_length=history_length, n_classes=5)
+    # agent.load('./models/agent_20190531-154240.pt')
 
     env = gym.make('CarRacing-v0').unwrapped
 
     episode_rewards = []
     for i in range(n_test_episodes):
         episode_reward = run_episode(env, agent, history_length=history_length,
-                                     rendering=rendering)
+                                     rendering=rendering, max_timesteps=args.steps)
         print('Episode reward: ', episode_reward)
         episode_rewards.append(episode_reward)
 

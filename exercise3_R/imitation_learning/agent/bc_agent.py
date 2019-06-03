@@ -4,7 +4,7 @@ from agent.networks import CNN
 
 class BCAgent:
     
-    def __init__(self, device='cpu', history_length=1, lr=1e-4, n_classes=4):
+    def __init__(self, device='cpu', history_length=1, lr=1e-4, n_classes=5):
         # TODO: Define network, loss function, optimizer
         self.device = torch.device(device)
 
@@ -19,6 +19,8 @@ class BCAgent:
         X_batch = X_batch.float().to(self.device)
         y_batch = y_batch.long().to(self.device)
 
+        self.net = self.net.train()
+
         # TODO: forward + backward + optimize
         pred = self.net(X_batch)
         loss = self.lossfn(pred, y_batch)
@@ -28,13 +30,18 @@ class BCAgent:
 
         return loss
 
-    def predict(self, X):
+    def predict(self, X, prob=False):
+
+        self.net = self.net.eval()
+        
         # TODO: forward pass
         X = X.float().to(self.device)
         outputs = self.net(X)
-        # print(torch.nn.functional.softmax(outputs))
-        output = torch.argmax(outputs, dim=1).cpu().detach().numpy()
-        return output
+        if prob:
+            output = torch.nn.functional.softmax(outputs, dim=1)
+        else:
+            output = torch.argmax(outputs, dim=1)
+        return output.cpu().detach().numpy()
 
     def save(self, file_name):
         torch.save(self.net.state_dict(), file_name)
