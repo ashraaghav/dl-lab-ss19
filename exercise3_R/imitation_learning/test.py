@@ -69,7 +69,7 @@ def run_episode(env, agent, history_length=1, rendering=True, max_timesteps=1000
         if state_tensor is not None:
             pred = agent.predict(state_tensor, prob=True)[0]
             # get action for max probability
-            a = id_to_action(np.argmax(pred))
+            a = id_to_action(np.argmax(pred), max_speed=1.0)
             # use probability to define acceleration if all 0
             if np.all(a == 0):
                 # print('softmax...', pred[3])

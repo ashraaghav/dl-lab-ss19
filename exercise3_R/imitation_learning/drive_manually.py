@@ -137,7 +137,7 @@ if __name__ == "__main__":
 
         print("Episode reward: %.2f" % episode_reward)
         # update samples only if reward is high
-        if episode_reward > 850:
+        if episode_reward > 650:
             episode_rewards.append(episode_reward)
             samples["state"].extend(epi_samples["state"])
             samples["action"].extend(epi_samples["action"])
