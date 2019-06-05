@@ -174,5 +174,5 @@ if __name__ == "__main__":
 
     # train model (you can change the parameters!)
     model_dir = './models/'
-    train_model(X_train, y_train, X_valid, y_valid, n_minibatches=1000, batch_size=64, lr=1e-4,
+    train_model(X_train, y_train, X_valid, y_valid, n_minibatches=2000, batch_size=64, lr=1e-4,
                 history_length=history_length, model_dir=model_dir, tensorboard_dir='../tensorboard')

@@ -6,7 +6,7 @@ class DQNAgent:
 
     def __init__(self, Q, Q_target, num_actions, gamma=0.95, batch_size=64,
                  max_epsilon=0.9, min_epsilon=0.1, eps_decay=100,
-                 tau=0.01, lr=1e-2, buffer_size=1e5):
+                 tau=0.01, lr=1e-4, buffer_size=1e5):
         """
          Q-Learning agent for off-policy TD control using Function Approximation.
          Finds the optimal greedy policy while following an epsilon-greedy policy.

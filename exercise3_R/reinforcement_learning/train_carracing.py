@@ -171,7 +171,7 @@ if __name__ == "__main__":
     # ...
     Q_network = CNN(history_length=5, n_classes=5)
     Q_target = CNN(history_length=5, n_classes=5)
-    agent = DQNAgent(Q=Q_network, Q_target=Q_target, num_actions=5, buffer_size=1e5)
+    agent = DQNAgent(Q=Q_network, Q_target=Q_target, num_actions=5, buffer_size=1e5, lr=1e-4)
 
     train_online(env, agent, num_episodes=args.episodes, history_length=5, model_dir="./models_carracing",
                  eval_cycle=20, num_eval_episodes=5, skip_frames=5, rendering=args.render,

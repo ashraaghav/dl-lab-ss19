@@ -22,18 +22,18 @@ if __name__ == "__main__":
 
     env = gym.make("CarRacing-v0").unwrapped
 
-    history_length =  0
+    history_length =  5
 
     #TODO: Define networks and load agent
     # ....
-    Q_network = CNN(history_length=5, n_classes=5)
-    Q_target = CNN(history_length=5, n_classes=5)
+    Q_network = CNN(history_length=history_length, n_classes=5)
+    Q_target = CNN(history_length=history_length, n_classes=5)
     agent = DQNAgent(Q=Q_network, Q_target=Q_target, num_actions=5)
     agent.load(args.model)
 
     episode_rewards = []
     for i in range(args.episodes):
-        stats = run_episode(env, agent, deterministic=True, do_training=False, rendering=True, history_length=5)
+        stats = run_episode(env, agent, deterministic=True, do_training=False, rendering=True, history_length=history_length)
         episode_rewards.append(stats.episode_reward)
         print('Episode %d - [ Reward %.2f ]' % (i+1, stats.episode_reward))
 

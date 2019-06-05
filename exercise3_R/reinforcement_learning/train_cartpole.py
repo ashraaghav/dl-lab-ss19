@@ -134,7 +134,7 @@ if __name__ == "__main__":
     Q_network = MLP(state_dim, num_actions)
     Q_target = MLP(state_dim, num_actions)
     # 2. init DQNAgent (see dqn/dqn_agent.py)
-    agent = DQNAgent(Q=Q_network, Q_target=Q_target, num_actions=num_actions, buffer_size=1e5)
+    agent = DQNAgent(Q=Q_network, Q_target=Q_target, num_actions=num_actions, buffer_size=1e5, lr=1e-4)
     # 3. train DQN agent with train_online(...)
     train_online(env=env, agent=agent, num_episodes=args.episodes, max_timesteps=args.steps,
                  eval_cycle=20, num_eval_episodes=5, rendering=args.render,
